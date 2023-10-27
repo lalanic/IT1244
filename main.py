@@ -194,10 +194,6 @@ def create_model(shape):
     lstm_model.add(tf.keras.layers.LSTM(units=LSTM_units))
     lstm_model.add(tf.keras.layers.Dense(units=LSTM_units, kernel_initializer="lecun_normal", activation="selu"))
 
-    lstm_model.add(tf.keras.layers.Dense(units=32, activation="linear"))
-    lstm_model.add(tf.keras.layers.Dense(units=16, activation="linear"))
-    lstm_model.add(tf.keras.layers.Dense(units=8, activation="linear"))
-
     lstm_model.add(tf.keras.layers.Dense(units=num_of_labels, activation="linear"))
 
     return lstm_model
