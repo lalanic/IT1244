@@ -394,7 +394,7 @@ def main():
         if is_standardize_output:
             standardized_predictions = best_model.predict(x_test)
             predictions = reverse_standardized_y_by_symbol(standardized_predictions, mean_std_list, COMPANY_INDEX)
-            y_test = reverse_standardized_y_by_symbol(y_test, mean_std_list, SECTOR_INDEX)
+            y_test = reverse_standardized_y_by_symbol(y_test, mean_std_list, COMPANY_INDEX)
         else:
             predictions = best_model.predict(x_test)
             
