@@ -8,11 +8,14 @@ pd.set_option('display.expand_frame_repr', False)
 # pd.set_option('display.max_rows', None)
 
 
-is_start_model = True
-is_by_symbol = True
-is_standardize_output = True
-is_plot_scatter = False
+is_train_model = True  # False = Use pretrained model
+is_by_symbol = False
+is_standardize_output = False
 is_plot_line = True
+
+
+COMPANY_INDEX = 117
+SECTOR_INDEX = 0
 
 days_backtracked = 1  # also known as batch
 train_ratio = 0.8
@@ -96,40 +99,7 @@ def normalize_by_symbol(dataframe_list_by_symbol):
     return df_copy_list
 
 
-# Returns 2D list with each row containing mean and std per column in order e.g. [[mean1, std1, mean2, std2 ...], ...]
-# MODIFIES BY REFERENCE
-def standardize_y_by_symbol(dataframe_list_by_symbol):
-    num_of_companies = len(dataframe_list_by_symbol)
-    num_of_rows = len(dataframe_list_by_symbol[0])
-    num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
-
-    mean_std_list_per_company = []
-    for i in range(num_of_companies):
-        mean_std_list = []
-        for j in range(3, 3 + num_of_labels):
-            col_mean = dataframe_list_by_symbol[i].iloc[:num_of_train_rows, j].mean()
-            col_std = dataframe_list_by_symbol[i].iloc[:num_of_train_rows, j].std()
-            mean_std_list.append(col_mean)
-            mean_std_list.append(col_std)
-            if col_std != 0:
-                dataframe_list_by_symbol[i].iloc[:num_of_train_rows, j] -= col_mean
-                dataframe_list_by_symbol[i].iloc[:num_of_train_rows, j] /= col_std
-
-        mean_std_list_per_company.append(mean_std_list)
-
-    return mean_std_list_per_company
-
-
-def reverse_standardized_y_by_symbol(y_std, mean_std_list, company_index):
-    reversed_y = y_std
-    for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
-        if mean_std_list[company_index][i + 1] != 0:
-            reversed_y[:, i] *= mean_std_list[company_index][j + 1]
-            reversed_y[:, i] += mean_std_list[company_index][j]
-    return reversed_y
-
-
-# Normalize x, standardize y
+# Normalize x, standardize ALL y (including validation + testing data)
 def scale_x_y_by_symbol(dataframe_list_by_symbol):
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
@@ -148,8 +118,30 @@ def scale_x_y_by_symbol(dataframe_list_by_symbol):
                 df_copy_list[i].iloc[:, j] -= col_min
                 df_copy_list[i].iloc[:, j] /= diff
 
-    mean_diff_list = standardize_y_by_symbol(df_copy_list)
-    return df_copy_list, mean_diff_list
+    mean_std_list_per_company = []
+    for i in range(num_of_companies):
+        mean_std_list = []
+        for j in range(3, 3 + num_of_labels):
+            col_mean = df_copy_list[i].iloc[:num_of_train_rows, j].mean()
+            col_std = df_copy_list[i].iloc[:num_of_train_rows, j].std()
+            mean_std_list.append(col_mean)
+            mean_std_list.append(col_std)
+            if col_std != 0:
+                df_copy_list[i].iloc[:, j] -= col_mean
+                df_copy_list[i].iloc[:, j] /= col_std
+
+        mean_std_list_per_company.append(mean_std_list)
+
+    return df_copy_list, mean_std_list_per_company
+
+
+def reverse_standardized_y_by_symbol(y_std, mean_std_list, company_index):
+    reversed_y = y_std
+    for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
+        if mean_std_list[company_index][i + 1] != 0:
+            reversed_y[:, i] *= mean_std_list[company_index][j + 1]
+            reversed_y[:, i] += mean_std_list[company_index][j]
+    return reversed_y
 
 
 # List of df grouped by symbol -> 1 full df + 1 train-only df -> Group both full and train-only df by sectors
@@ -188,8 +180,69 @@ def normalize_by_sector(dataframe_list_by_symbol):
     for i in range(num_of_sectors):
         recombined_df = pd.concat([recombined_df, df_list_by_sector[i]])
 
+    df_list = group_by_symbol(recombined_df)
+    return df_list
+
+
+# Normalize x, standardize ALL y (including validation + testing data)
+def scale_x_y_by_sector(dataframe_list_by_symbol):
+    num_of_companies = len(dataframe_list_by_symbol)
+    num_of_rows = len(dataframe_list_by_symbol[0])
+    num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
+
+    df_copy_list = []
+    for i in range(num_of_companies):
+        df_copy_list.append(dataframe_list_by_symbol[i].copy(deep=True))
+
+    combined_df = pd.DataFrame()
+    for i in range(num_of_companies):
+        combined_df = pd.concat([combined_df, df_copy_list[i]])
+
+    combined_train_df = pd.DataFrame()
+    for i in range(num_of_companies):
+        combined_train_df = pd.concat([combined_train_df, df_copy_list[i].iloc[:num_of_train_rows, :]])
+
+    df_list_by_sector = group_by_sector(combined_df)
+    train_df_list_by_sector = group_by_sector(combined_train_df)
+    num_of_sectors = len(train_df_list_by_sector)
+
+    for i in range(num_of_sectors):
+        for j in range(25, len(df_copy_list[i].columns)):
+            col_min = train_df_list_by_sector[i].iloc[:, j].min()
+            col_max = train_df_list_by_sector[i].iloc[:, j].max()
+            diff = col_max - col_min
+            if diff != 0:
+                df_list_by_sector[i].iloc[:, j] -= col_min
+                df_list_by_sector[i].iloc[:, j] /= diff
+
+    mean_std_list_per_sector = []
+    for i in range(num_of_sectors):
+        mean_std_list = []
+        for j in range(3, 3 + num_of_labels):
+            col_mean = train_df_list_by_sector[i].iloc[:, j].mean()
+            col_std = train_df_list_by_sector[i].iloc[:, j].std()
+            mean_std_list.append(col_mean)
+            mean_std_list.append(col_std)
+            if col_std != 0:
+                df_list_by_sector[i].iloc[:, j] -= col_mean
+                df_list_by_sector[i].iloc[:, j] /= col_std
+        mean_std_list_per_sector.append(mean_std_list)
+
+    recombined_df = pd.DataFrame()
+    for i in range(num_of_sectors):
+        recombined_df = pd.concat([recombined_df, df_list_by_sector[i]])
+
     df_list_by_symbol = group_by_symbol(recombined_df)
-    return df_list_by_symbol
+    return df_list_by_symbol, mean_std_list_per_sector
+
+
+def reverse_standardized_y_by_sector(y_std, mean_std_list, sector_index):
+    reversed_y = y_std
+    for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
+        if mean_std_list[sector_index][i + 1] != 0:
+            reversed_y[:, i] *= mean_std_list[sector_index][j + 1]
+            reversed_y[:, i] += mean_std_list[sector_index][j]
+    return reversed_y
 
 
 def split_train_test(normalized_dataframe_list):
@@ -285,15 +338,6 @@ def fit_model_industry(model, x_train, y_train, rows_per_company):
 
 
 def compare_predictions(predictions, y):
-    print(predictions)
-    print(y)
-    if is_plot_scatter:
-        plt.scatter(predictions, y)
-        plt.xlabel("predicted")
-        plt.ylabel("actual")
-        plt.axline((0, 0), slope=1)
-        plt.show()
-
     if is_plot_line:
         x_axis = np.arange(len(predictions))
         labels_list = ["Open", "High", "Low", "Close"]
@@ -306,22 +350,25 @@ def compare_predictions(predictions, y):
 
 
 def main():
-    filename = None # Replace with data.parquet path
+    filename = r"data.parquet"  # Replace with data.parquet path
     raw_dataframe = load_data(filename)
     cleaned_dataframe = clean_data(raw_dataframe)
     dataframe_list_by_symbol = process_data(cleaned_dataframe)
 
-    mean_std = None
+    mean_std_list = None
     if is_by_symbol:
         if is_standardize_output:
-            scaled_dataframe_list, mean_std = scale_x_y_by_symbol(dataframe_list_by_symbol)
+            scaled_dataframe_list, mean_std_list = scale_x_y_by_symbol(dataframe_list_by_symbol)
         # Normalize + Standardize Output Branch
         else:
             scaled_dataframe_list = normalize_by_symbol(dataframe_list_by_symbol)
 
     # By Sector Branch
     else:
-        scaled_dataframe_list = normalize_by_sector(dataframe_list_by_symbol)
+        if is_standardize_output:
+            scaled_dataframe_list, mean_std_list = scale_x_y_by_sector(dataframe_list_by_symbol)
+        else:
+            scaled_dataframe_list = normalize_by_sector(dataframe_list_by_symbol)
 
     train_df, test_df = split_train_test(scaled_dataframe_list)
 
@@ -333,37 +380,46 @@ def main():
     rows_per_company = len(dataframe_list_by_symbol[0])
     num_of_test_rows_per_company = int((1 - train_ratio) * rows_per_company)
 
-    if is_start_model:
-        if is_by_symbol:
-            x_train, y_train = convert_to_lstm_input(train_df_list_by_symbol[117])
-            input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
-            lstm_model = create_model(input_shape)
-            results = fit_model(lstm_model, x_train, y_train)
+    if is_by_symbol:
+        x_train, y_train = convert_to_lstm_input(train_df_list_by_symbol[COMPANY_INDEX])
+        input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
+        lstm_model = create_model(input_shape)
 
-            x_test, y_test = convert_to_lstm_input(test_df_list_by_symbol[117])
-            best_model = tf.keras.models.load_model("best_model/")
+        if is_train_model:
+            fit_model(lstm_model, x_train, y_train)
 
-            if is_standardize_output:
-                standardized_predictions = best_model.predict(x_test)
-                predictions = reverse_standardized_y_by_symbol(standardized_predictions, mean_std, 117)
-                compare_predictions(predictions, y_test)
-            else:
-                predictions = best_model.predict(x_test)
-                compare_predictions(predictions, y_test)
+        x_test, y_test = convert_to_lstm_input(test_df_list_by_symbol[COMPANY_INDEX])
+        best_model = tf.keras.models.load_model("best_model/")
 
-        # By Sector Branch
+        if is_standardize_output:
+            standardized_predictions = best_model.predict(x_test)
+            predictions = reverse_standardized_y_by_symbol(standardized_predictions, mean_std_list, COMPANY_INDEX)
+            y_test = reverse_standardized_y_by_sector(y_test, mean_std_list, SECTOR_INDEX)
+            compare_predictions(predictions, y_test)
         else:
-            x_train, y_train = convert_to_lstm_input(train_df_list_by_sector[10])
-            input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
-            lstm_model = create_model(input_shape)
-            results = fit_model_industry(lstm_model, x_train, y_train, rows_per_company)
+            predictions = best_model.predict(x_test)
+            compare_predictions(predictions, y_test)
 
-            x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[10])
-            best_model = tf.keras.models.load_model("best_model_industry/")
+    # By Sector Branch
+    else:
+        x_train, y_train = convert_to_lstm_input(train_df_list_by_sector[SECTOR_INDEX])
+        input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
+        lstm_model = create_model(input_shape)
+
+        if is_train_model:
+            fit_model_industry(lstm_model, x_train, y_train, rows_per_company)
+
+        x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
+        best_model = tf.keras.models.load_model("best_model_industry/")
+
+        if is_standardize_output:
+            standardized_predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
+            predictions = reverse_standardized_y_by_sector(standardized_predictions, mean_std_list, SECTOR_INDEX)
+            y_test = reverse_standardized_y_by_sector(y_test, mean_std_list, SECTOR_INDEX)
+            compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
+        else:
             predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
             compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
-
-        print(min(results.history["val_root_mean_squared_error"]))
 
 
 if __name__ == '__main__':
