@@ -15,6 +15,7 @@ is_plot_line = True
 
 days_backtracked = 7  # also known as batch
 train_ratio = 0.8
+val_ratio = 0.1
 num_of_features = 9
 
 initial_label = 0
@@ -76,7 +77,7 @@ def process_data(dataframe):
 def normalize_by_symbol(dataframe_list_by_symbol):
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
-    num_of_train_rows = int(train_ratio * num_of_rows)
+    num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
 
     df_copy_list = []
     for i in range(num_of_companies):
@@ -98,7 +99,7 @@ def normalize_by_symbol(dataframe_list_by_symbol):
 def normalize_by_sector(dataframe_list_by_symbol):
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
-    num_of_train_rows = int(train_ratio * num_of_rows)
+    num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
 
     df_copy_list = []
     for i in range(num_of_companies):
@@ -203,7 +204,7 @@ def fit_model(model, x_train, y_train):
     lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model/", save_best_only=True)
 
     model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
-    history = model.fit(x_train, y_train, validation_split=0.1, epochs=num_of_epochs, callbacks=[lstm_cp])
+    history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
 
     return history
 
@@ -219,7 +220,7 @@ def fit_model_industry(model, x_train, y_train, rows_per_company):
     for i in range(num_of_companies):
         initial = i * train_rows_per_company
         end = initial + train_rows_per_company
-        history = model.fit(x_train[initial:end], y_train[initial:end], validation_split=0.1, epochs=num_of_epochs, callbacks=[lstm_cp])
+        history = model.fit(x_train[initial:end], y_train[initial:end], validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
 
     return history
 
