@@ -306,8 +306,7 @@ def compare_predictions(predictions, y):
 
 
 def main():
-    filename = (r'C:\Users\yongs\Downloads\Uni\NUS\Year 4 Sem 1\IT1244 Artificial Intelligence Technology and Impact'
-                r'\Project\Cleaned Data\data.parquet')
+    filename = None # Replace with data.parquet path
     raw_dataframe = load_data(filename)
     cleaned_dataframe = clean_data(raw_dataframe)
     dataframe_list_by_symbol = process_data(cleaned_dataframe)
