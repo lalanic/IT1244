@@ -395,10 +395,10 @@ def main():
             standardized_predictions = best_model.predict(x_test)
             predictions = reverse_standardized_y_by_symbol(standardized_predictions, mean_std_list, COMPANY_INDEX)
             y_test = reverse_standardized_y_by_sector(y_test, mean_std_list, SECTOR_INDEX)
-            compare_predictions(predictions, y_test)
         else:
             predictions = best_model.predict(x_test)
-            compare_predictions(predictions, y_test)
+            
+        compare_predictions(predictions, y_test)
 
     # By Sector Branch
     else:
@@ -416,10 +416,10 @@ def main():
             standardized_predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
             predictions = reverse_standardized_y_by_sector(standardized_predictions, mean_std_list, SECTOR_INDEX)
             y_test = reverse_standardized_y_by_sector(y_test, mean_std_list, SECTOR_INDEX)
-            compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
         else:
             predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
-            compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
+            
+        compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
 
 
 if __name__ == '__main__':
