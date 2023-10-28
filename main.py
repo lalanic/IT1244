@@ -95,7 +95,8 @@ def normalize_by_symbol(dataframe_list_by_symbol):
     return df_copy_list
 
 
-# List of dfs by symbol -> copy -> combined df -> list of df by sector -> list of train df by sector -> scaling -> recombine -> list of dfs by symbol
+# List of df grouped by symbol -> 1 full df + 1 train-only df -> Group both full and train-only df by sectors
+# -> Scaling parameters from train-only df applied to full df -> Full df recombined and grouped by symbol
 def normalize_by_sector(dataframe_list_by_symbol):
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
@@ -105,32 +106,33 @@ def normalize_by_sector(dataframe_list_by_symbol):
     for i in range(num_of_companies):
         df_copy_list.append(dataframe_list_by_symbol[i].copy(deep=True))
 
-    df = pd.DataFrame()
+    combined_df = pd.DataFrame()
     for i in range(num_of_companies):
-        df = pd.concat([df, df_copy_list[i]])
+        combined_df = pd.concat([combined_df, df_copy_list[i]])
 
-    grouped_by_sector = group_by_sector(df)
-    num_of_sectors = len(grouped_by_sector)
+    combined_train_df = pd.DataFrame()
+    for i in range(num_of_companies):
+        combined_train_df = pd.concat([combined_train_df, df_copy_list[i].iloc[:num_of_train_rows, :]])
 
-    train_df = pd.DataFrame()
+    df_list_by_sector = group_by_sector(combined_df)
+    train_df_list_by_sector = group_by_sector(combined_train_df)
+    num_of_sectors = len(train_df_list_by_sector)
+
     for i in range(num_of_sectors):
-        train_df = pd.concat([train_df, grouped_by_sector[i].iloc[:num_of_train_rows, :]])
-
-    train_grouped_by_sector = group_by_sector(train_df)
-    for i in range(num_of_sectors):
-        for j in range(25, len(train_grouped_by_sector[i].columns)):
-            col_min = train_grouped_by_sector[i].iloc[:, j].min()
-            col_max = train_grouped_by_sector[i].iloc[:, j].max()
+        for j in range(25, len(df_copy_list[i].columns)):
+            col_min = train_df_list_by_sector[i].iloc[:, j].min()
+            col_max = train_df_list_by_sector[i].iloc[:, j].max()
             diff = col_max - col_min
             if diff != 0:
-                grouped_by_sector[i].iloc[:, j] -= col_min
-                grouped_by_sector[i].iloc[:, j] /= diff
+                df_list_by_sector[i].iloc[:, j] -= col_min
+                df_list_by_sector[i].iloc[:, j] /= diff
 
     recombined_df = pd.DataFrame()
     for i in range(num_of_sectors):
-        recombined_df = pd.concat([recombined_df, grouped_by_sector[i]])
+        recombined_df = pd.concat([recombined_df, df_list_by_sector[i]])
 
-    return group_by_symbol(recombined_df)
+    df_list_by_symbol = group_by_symbol(recombined_df)
+    return df_list_by_symbol
 
 
 def split_train_test(normalized_dataframe_list):
