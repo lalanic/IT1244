@@ -372,15 +372,13 @@ def main():
 
     train_df, test_df = split_train_test(scaled_dataframe_list)
 
-    train_df_list_by_symbol = group_by_symbol(train_df)
-    test_df_list_by_symbol = group_by_symbol(test_df)
-    train_df_list_by_sector = group_by_sector(train_df)
-    test_df_list_by_sector = group_by_sector(test_df)
-
     rows_per_company = len(dataframe_list_by_symbol[0])
     num_of_test_rows_per_company = int((1 - train_ratio) * rows_per_company)
 
     if is_by_symbol:
+        train_df_list_by_symbol = group_by_symbol(train_df)
+        test_df_list_by_symbol = group_by_symbol(test_df)
+
         x_train, y_train = convert_to_lstm_input(train_df_list_by_symbol[COMPANY_INDEX])
         input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
         lstm_model = create_model(input_shape)
@@ -397,11 +395,14 @@ def main():
             y_test = reverse_standardized_y_by_symbol(y_test, mean_std_list, COMPANY_INDEX)
         else:
             predictions = best_model.predict(x_test)
-            
+
         compare_predictions(predictions, y_test)
 
     # By Sector Branch
     else:
+        train_df_list_by_sector = group_by_sector(train_df)
+        test_df_list_by_sector = group_by_sector(test_df)
+
         x_train, y_train = convert_to_lstm_input(train_df_list_by_sector[SECTOR_INDEX])
         input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
         lstm_model = create_model(input_shape)
@@ -418,7 +419,7 @@ def main():
             y_test = reverse_standardized_y_by_sector(y_test, mean_std_list, SECTOR_INDEX)
         else:
             predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
-            
+
         compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
 
 
