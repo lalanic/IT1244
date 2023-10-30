@@ -20,7 +20,7 @@ SECTOR_INDEX = 0
 days_backtracked = 1  # also known as batch
 train_ratio = 0.8
 val_ratio = 0.1
-num_of_features = 9
+num_of_features = 8
 
 initial_label = 0
 end_label = 4
@@ -70,8 +70,9 @@ def process_data(dataframe):
             dataframe_list_by_symbol[i]["D-" + str(j) + " Adj Close"] = dataframe_list_by_symbol[i]["Adj Close"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Vol"] = dataframe_list_by_symbol[i]["Volume"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " News Vol Proportion"] = (dataframe_list_by_symbol[i]["News - Volume"] / dataframe_list_by_symbol[i]["News - All News Volume"]).shift(periods=j, axis=0)
-            dataframe_list_by_symbol[i]["D-" + str(j) + "Pos News"] = dataframe_list_by_symbol[i]["News - Positive Sentiment"].shift(periods=j, axis=0)
-            dataframe_list_by_symbol[i]["D-" + str(j) + "Neg News"] = dataframe_list_by_symbol[i]["News - Negative Sentiment"].shift(periods=j, axis=0)
+            # dataframe_list_by_symbol[i]["D-" + str(j) + "Pos News"] = dataframe_list_by_symbol[i]["News - Positive Sentiment"].shift(periods=j, axis=0)
+            # dataframe_list_by_symbol[i]["D-" + str(j) + "Neg News"] = dataframe_list_by_symbol[i]["News - Negative Sentiment"].shift(periods=j, axis=0)
+            dataframe_list_by_symbol[i]["D-" + str(j) + "Net News Sentiment"] = (dataframe_list_by_symbol[i]["News - Positive Sentiment"] - dataframe_list_by_symbol[i]["News - Negative Sentiment"]).shift(periods=j, axis=0)
         dataframe_list_by_symbol[i].dropna(inplace=True, ignore_index=True)
 
     return dataframe_list_by_symbol
