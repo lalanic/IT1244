@@ -72,7 +72,7 @@ def process_data(dataframe):
             dataframe_list_by_symbol[i]["D-" + str(j) + " News Vol Proportion"] = (dataframe_list_by_symbol[i]["News - Volume"] / dataframe_list_by_symbol[i]["News - All News Volume"]).shift(periods=j, axis=0)
             # dataframe_list_by_symbol[i]["D-" + str(j) + "Pos News"] = dataframe_list_by_symbol[i]["News - Positive Sentiment"].shift(periods=j, axis=0)
             # dataframe_list_by_symbol[i]["D-" + str(j) + "Neg News"] = dataframe_list_by_symbol[i]["News - Negative Sentiment"].shift(periods=j, axis=0)
-            dataframe_list_by_symbol[i]["D-" + str(j) + "Net News Sentiment"] = (dataframe_list_by_symbol[i]["News - Positive Sentiment"] - dataframe_list_by_symbol[i]["News - Negative Sentiment"]).shift(periods=j, axis=0)
+            dataframe_list_by_symbol[i]["D-" + str(j) + " Net News Sentiment"] = (dataframe_list_by_symbol[i]["News - Positive Sentiment"] - dataframe_list_by_symbol[i]["News - Negative Sentiment"]).shift(periods=j, axis=0)
         dataframe_list_by_symbol[i].dropna(inplace=True, ignore_index=True)
 
     return dataframe_list_by_symbol
