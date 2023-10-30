@@ -17,7 +17,7 @@ is_plot_line = True
 COMPANY_INDEX = 117
 SECTOR_INDEX = 0
 
-days_backtracked = 1  # also known as batch
+days_backtracked = 1
 train_ratio = 0.8
 val_ratio = 0.1
 num_of_features = 8
