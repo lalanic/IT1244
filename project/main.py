@@ -304,7 +304,7 @@ def create_model(shape):
 
     lstm_model.add(tf.keras.layers.InputLayer(input_shape=shape))
 
-    lstm_model.add(tf.keras.layers.LSTM(units=LSTM_units, return_sequences=True))
+    # lstm_model.add(tf.keras.layers.LSTM(units=LSTM_units, return_sequences=True))
     lstm_model.add(tf.keras.layers.LSTM(units=LSTM_units))
     # lstm_model.add(tf.keras.layers.Dense(units=LSTM_units, kernel_initializer="lecun_normal", activation="selu"))
 
