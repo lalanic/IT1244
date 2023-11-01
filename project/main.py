@@ -9,13 +9,13 @@ pd.set_option('display.expand_frame_repr', False)
 
 
 is_train_model = True  # False = Use pretrained model
-is_by_symbol = False
+is_by_symbol = True
 is_standardize_output = False
 is_plot_line = True
 
 
-COMPANY_INDEX = 117
-SECTOR_INDEX = 0
+COMPANY_INDEX = 49
+SECTOR_INDEX = 4
 
 days_backtracked = 1
 train_ratio = 0.8
@@ -70,8 +70,6 @@ def process_data(dataframe):
             dataframe_list_by_symbol[i]["D-" + str(j) + " Adj Close"] = dataframe_list_by_symbol[i]["Adj Close"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Vol"] = dataframe_list_by_symbol[i]["Volume"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " News Vol Proportion"] = (dataframe_list_by_symbol[i]["News - Volume"] / dataframe_list_by_symbol[i]["News - All News Volume"]).shift(periods=j, axis=0)
-            # dataframe_list_by_symbol[i]["D-" + str(j) + "Pos News"] = dataframe_list_by_symbol[i]["News - Positive Sentiment"].shift(periods=j, axis=0)
-            # dataframe_list_by_symbol[i]["D-" + str(j) + "Neg News"] = dataframe_list_by_symbol[i]["News - Negative Sentiment"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Net News Sentiment"] = (dataframe_list_by_symbol[i]["News - Positive Sentiment"] - dataframe_list_by_symbol[i]["News - Negative Sentiment"]).shift(periods=j, axis=0)
         dataframe_list_by_symbol[i].dropna(inplace=True, ignore_index=True)
 
@@ -323,29 +321,13 @@ def fit_model(model, x_train, y_train):
     return history
 
 
-def fit_model_industry(model, x_train, y_train, rows_per_company):
-    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_industry/", save_best_only=True)
-
-    model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
-
-    history = None
-    train_rows_per_company = int(train_ratio * rows_per_company)
-    num_of_companies = int(len(x_train)/train_rows_per_company)
-    for i in range(num_of_companies):
-        initial = i * train_rows_per_company
-        end = initial + train_rows_per_company
-        history = model.fit(x_train[initial:end], y_train[initial:end], validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
-
-    return history
-
-
 def compare_predictions(predictions, y):
     if is_plot_line:
         x_axis = np.arange(len(predictions))
         labels_list = ["Open", "High", "Low", "Close"]
         enumerated_labels = enumerate(labels_list)
         for i, label in enumerated_labels:
-            plt.plot(x_axis, predictions[:, i], label=label)
+            plt.plot(x_axis, predictions[:, i], label="Predicted " + label)
             plt.plot(x_axis, y[:, i], label="Actual " + label)
             plt.legend()
             plt.show()
@@ -380,6 +362,7 @@ def main():
     if is_by_symbol:
         train_df_list_by_symbol = group_by_symbol(train_df)
         test_df_list_by_symbol = group_by_symbol(test_df)
+        print(train_df_list_by_symbol[COMPANY_INDEX])
 
         x_train, y_train = convert_to_lstm_input(train_df_list_by_symbol[COMPANY_INDEX])
         input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
@@ -404,13 +387,14 @@ def main():
     else:
         train_df_list_by_sector = group_by_sector(train_df)
         test_df_list_by_sector = group_by_sector(test_df)
+        print(train_df_list_by_sector[SECTOR_INDEX])
 
         x_train, y_train = convert_to_lstm_input(train_df_list_by_sector[SECTOR_INDEX])
         input_shape = (np.shape(x_train)[1], np.shape(x_train)[2])
         lstm_model = create_model(input_shape)
 
         if is_train_model:
-            fit_model_industry(lstm_model, x_train, y_train, rows_per_company)
+            fit_model(lstm_model, x_train, y_train)
 
         x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
         best_model = tf.keras.models.load_model("best_model_industry/")
