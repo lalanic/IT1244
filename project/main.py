@@ -2,6 +2,7 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import sklearn.metrics as skm
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.expand_frame_repr', False)
@@ -9,7 +10,7 @@ pd.set_option('display.expand_frame_repr', False)
 
 
 is_train_model = True  # False = Use pretrained model
-is_by_symbol = True
+is_by_symbol = False
 is_standardize_output = False
 is_plot_line = True
 
@@ -321,11 +322,31 @@ def fit_model(model, x_train, y_train):
     return history
 
 
+def fit_model_industry(model, x_train, y_train, rows_per_company):
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_industry/", save_best_only=True)
+
+    model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
+
+    history = None
+    train_rows_per_company = int(train_ratio * rows_per_company)
+    num_of_companies = int(len(x_train)/train_rows_per_company)
+    for i in range(num_of_companies):
+        initial = i * train_rows_per_company
+        end = initial + train_rows_per_company
+        history = model.fit(x_train[initial:end], y_train[initial:end], validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
+
+    return history
+
+
 def compare_predictions(predictions, y):
     if is_plot_line:
         x_axis = np.arange(len(predictions))
         labels_list = ["Open", "High", "Low", "Close"]
         enumerated_labels = enumerate(labels_list)
+        for i, label in enumerated_labels:
+            root_mean_squared_error = skm.mean_squared_error(y[:, i], predictions[:, i], squared=False)
+            print(label)
+            print(root_mean_squared_error)
         for i, label in enumerated_labels:
             plt.plot(x_axis, predictions[:, i], label="Predicted " + label)
             plt.plot(x_axis, y[:, i], label="Actual " + label)
@@ -394,7 +415,7 @@ def main():
         lstm_model = create_model(input_shape)
 
         if is_train_model:
-            fit_model(lstm_model, x_train, y_train)
+            fit_model_industry(lstm_model, x_train, y_train, rows_per_company)
 
         x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
         best_model = tf.keras.models.load_model("best_model_industry/")
