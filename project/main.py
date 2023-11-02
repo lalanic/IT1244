@@ -9,8 +9,8 @@ pd.set_option('display.expand_frame_repr', False)
 # pd.set_option('display.max_rows', None)
 
 
-is_train_model = True  # False = Use pretrained model
-is_by_symbol = True
+is_train_model = False  # False = Use pretrained model
+is_by_symbol = False
 is_standardize_output = False
 is_plot_line = True
 
@@ -34,11 +34,25 @@ num_of_epochs = 50
 
 
 def load_data(filename):
+    """
+    Loads parquet file into a pandas dataframe.
+
+    :param filename: Raw string of dataset in parquet filepath
+    :return: Pandas Dataframe of dataset
+    """
     dataset = pd.read_parquet(filename)
     return dataset
 
 
 def clean_data(dataframe):
+    """
+    1) Removes companies with non-standard number of rows. (CEG, OGN)
+    2) Removes unused columns containing strings. (Security and GICS Sub-Industry)
+    3) Shifts column positions to leftmost. (Symbol and GICS Sector)
+
+    :param dataframe: Pandas Dataframe of dataset
+    :return: Modified Pandas Dataframe of dataset
+    """
     cleaned_dataframe = dataframe.copy(deep=True)
     cleaned_dataframe = cleaned_dataframe[cleaned_dataframe.Symbol != "CEG"]
     cleaned_dataframe = cleaned_dataframe[cleaned_dataframe.Symbol != "OGN"]
@@ -55,6 +69,13 @@ def clean_data(dataframe):
 
 
 def process_data(dataframe):
+    """
+    Adds feature columns depending on days_backtracked and returns a list of pandas dataframes by company.
+
+    :param dataframe: Pandas Dataframe of dataset
+    :return: List of modified pandas dataframes grouped by company.
+    """
+
     grouped_by_symbol = dataframe.groupby(dataframe["Symbol"])
 
     dataframe_list_by_symbol = []
@@ -77,8 +98,13 @@ def process_data(dataframe):
     return dataframe_list_by_symbol
 
 
-# Obtain scaling parameters from training and scale entire data per company
 def normalize_by_symbol(dataframe_list_by_symbol):
+    """
+    Normalizes x-values by company with scaling parameters obtained from training data.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
+    :return: List of pandas dataframes grouped by company with x-values normalized by company.
+    """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
     num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
@@ -99,8 +125,14 @@ def normalize_by_symbol(dataframe_list_by_symbol):
     return df_copy_list
 
 
-# Normalize x, standardize ALL y (including validation + testing data)
 def scale_x_y_by_symbol(dataframe_list_by_symbol):
+    """
+    Normalizes x-values and standardizes y-values by company with scaling parameters obtained from training data.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
+    :return: List of pandas dataframes grouped by company with x-values normalized by company and y-values standardized
+             by company, List of means and standard deviations grouped by company
+    """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
     num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
@@ -136,6 +168,14 @@ def scale_x_y_by_symbol(dataframe_list_by_symbol):
 
 
 def reverse_standardized_y_by_symbol(y_std, mean_std_list, company_index):
+    """
+    Reverses standardization by company on y-values.
+
+    :param y_std: List of standardized y-values.
+    :param mean_std_list: List of means and standard deviations grouped by company.
+    :param company_index: Numerical value that identifies the company.
+    :return: Returns y-values with standardization reversed.
+    """
     reversed_y = y_std
     for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
         if mean_std_list[company_index][i + 1] != 0:
@@ -147,6 +187,12 @@ def reverse_standardized_y_by_symbol(y_std, mean_std_list, company_index):
 # List of df grouped by symbol -> 1 full df + 1 train-only df -> Group both full and train-only df by sectors
 # -> Scaling parameters from train-only df applied to full df -> Full df recombined and grouped by symbol
 def normalize_by_sector(dataframe_list_by_symbol):
+    """
+    Normalizes x-values by sector with scaling parameters obtained from training data.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
+    :return: List of pandas dataframes grouped by company with x-values normalized by sector.
+    """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
     num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
@@ -184,8 +230,14 @@ def normalize_by_sector(dataframe_list_by_symbol):
     return df_list
 
 
-# Normalize x, standardize ALL y (including validation + testing data)
 def scale_x_y_by_sector(dataframe_list_by_symbol):
+    """
+    Normalizes x-values and standardizes y-values by sector with scaling parameters obtained from training data.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
+    :return: List of pandas dataframes grouped by company with x-values normalized by sector and y-values standardized
+             by sector.
+    """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
     num_of_train_rows = int(train_ratio * (1 - val_ratio) * num_of_rows)
@@ -237,6 +289,14 @@ def scale_x_y_by_sector(dataframe_list_by_symbol):
 
 
 def reverse_standardized_y_by_sector(y_std, mean_std_list, sector_index):
+    """
+    Reverses standardization by sector on y-values.
+
+    :param y_std: List of standardized y-values.
+    :param mean_std_list: List of means and standard deviations grouped by sector.
+    :param sector_index: Numerical value that identifies the sector.
+    :return: Returns y-values with standardization reversed.
+    """
     reversed_y = y_std
     for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
         if mean_std_list[sector_index][i + 1] != 0:
@@ -245,16 +305,22 @@ def reverse_standardized_y_by_sector(y_std, mean_std_list, sector_index):
     return reversed_y
 
 
-def split_train_test(normalized_dataframe_list):
-    num_of_companies = len(normalized_dataframe_list)
-    num_of_rows = len(normalized_dataframe_list[0])
+def split_train_test(scaled_dataframe_list):
+    """
+    Splits list of feature scaled pandas dataframes into train and test dataframes.
+
+    :param scaled_dataframe_list: List of feature scaled pandas dataframes grouped by company.
+    :return: Pandas dataframe with training data, Pandas dataframe with testing data
+    """
+    num_of_companies = len(scaled_dataframe_list)
+    num_of_rows = len(scaled_dataframe_list[0])
     num_of_train_rows = int(train_ratio * num_of_rows)
 
     train_df = pd.DataFrame()
     test_df = pd.DataFrame()
     for i in range(num_of_companies):
-        train_df = pd.concat([train_df, normalized_dataframe_list[i].iloc[:num_of_train_rows, :]])
-        test_df = pd.concat([test_df, normalized_dataframe_list[i].iloc[num_of_train_rows:, :]])
+        train_df = pd.concat([train_df, scaled_dataframe_list[i].iloc[:num_of_train_rows, :]])
+        test_df = pd.concat([test_df, scaled_dataframe_list[i].iloc[num_of_train_rows:, :]])
 
     return train_df, test_df
 
@@ -315,6 +381,15 @@ def create_model(shape):
 
 def fit_model(model, x_train, y_train):
     lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model/", save_best_only=True)
+
+    model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
+    history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
+
+    return history
+
+
+def fit_model_industry(model, x_train, y_train):
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_industry/", save_best_only=True)
 
     model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
     history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
@@ -388,6 +463,7 @@ def main():
 
         compare_predictions(predictions, y_test)
 
+
     # By Sector Branch
     else:
         train_df_list_by_sector = group_by_sector(train_df)
@@ -399,7 +475,7 @@ def main():
         lstm_model = create_model(input_shape)
 
         if is_train_model:
-            fit_model(lstm_model, x_train, y_train)
+            fit_model_industry(lstm_model, x_train, y_train)
 
         x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
         best_model = tf.keras.models.load_model("best_model_industry/")
@@ -409,9 +485,9 @@ def main():
             predictions = reverse_standardized_y_by_sector(standardized_predictions, mean_std_list, SECTOR_INDEX)
             y_test = reverse_standardized_y_by_sector(y_test, mean_std_list, SECTOR_INDEX)
         else:
-            predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
+            predictions = best_model.predict(x_test[5*num_of_test_rows_per_company:6*num_of_test_rows_per_company])
 
-        compare_predictions(predictions, y_test[:num_of_test_rows_per_company])
+        compare_predictions(predictions, y_test[5*num_of_test_rows_per_company:6*num_of_test_rows_per_company])
 
 
 if __name__ == '__main__':
