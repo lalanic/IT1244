@@ -10,15 +10,15 @@ pd.set_option('display.expand_frame_repr', False)
 
 
 is_train_model = False  # False = Use pretrained model
-is_by_symbol = False
-is_standardize_output = False
-is_plot_line = True
+is_by_symbol = False  # True = Train by company, False = Train by sector
+is_standardize_output = False  # True = Standardize y-values
+is_plot_line = True  # True = Print root-mean-square errors for all 4 y-values and plot predicted vs actual line graph
 
 
-COMPANY_INDEX = 49
-SECTOR_INDEX = 4
+COMPANY_INDEX = 49  # Change company
+SECTOR_INDEX = 4  # Change industry (sector)
 
-days_backtracked = 1
+days_backtracked = 1  # Change number of previous days data used
 train_ratio = 0.8
 val_ratio = 0.1
 num_of_features = 8
@@ -73,7 +73,7 @@ def process_data(dataframe):
     Adds feature columns depending on days_backtracked and returns a list of pandas dataframes by company.
 
     :param dataframe: Pandas Dataframe of dataset
-    :return: List of modified pandas dataframes grouped by company.
+    :return: List of modified pandas dataframes grouped by company
     """
 
     grouped_by_symbol = dataframe.groupby(dataframe["Symbol"])
@@ -102,8 +102,8 @@ def normalize_by_symbol(dataframe_list_by_symbol):
     """
     Normalizes x-values by company with scaling parameters obtained from training data.
 
-    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
-    :return: List of pandas dataframes grouped by company with x-values normalized by company.
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
+    :return: List of pandas dataframes grouped by company with x-values normalized by company
     """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
@@ -129,7 +129,7 @@ def scale_x_y_by_symbol(dataframe_list_by_symbol):
     """
     Normalizes x-values and standardizes y-values by company with scaling parameters obtained from training data.
 
-    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
     :return: List of pandas dataframes grouped by company with x-values normalized by company and y-values standardized
              by company, List of means and standard deviations grouped by company
     """
@@ -172,9 +172,9 @@ def reverse_standardized_y_by_symbol(y_std, mean_std_list, company_index):
     Reverses standardization by company on y-values.
 
     :param y_std: List of standardized y-values.
-    :param mean_std_list: List of means and standard deviations grouped by company.
-    :param company_index: Numerical value that identifies the company.
-    :return: Returns y-values with standardization reversed.
+    :param mean_std_list: List of means and standard deviations grouped by company
+    :param company_index: Numerical value that identifies the company
+    :return: y-values with standardization reversed
     """
     reversed_y = y_std
     for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
@@ -190,8 +190,8 @@ def normalize_by_sector(dataframe_list_by_symbol):
     """
     Normalizes x-values by sector with scaling parameters obtained from training data.
 
-    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
-    :return: List of pandas dataframes grouped by company with x-values normalized by sector.
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
+    :return: List of pandas dataframes grouped by company with x-values normalized by sector
     """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
@@ -234,9 +234,9 @@ def scale_x_y_by_sector(dataframe_list_by_symbol):
     """
     Normalizes x-values and standardizes y-values by sector with scaling parameters obtained from training data.
 
-    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company.
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
     :return: List of pandas dataframes grouped by company with x-values normalized by sector and y-values standardized
-             by sector.
+             by sector
     """
     num_of_companies = len(dataframe_list_by_symbol)
     num_of_rows = len(dataframe_list_by_symbol[0])
@@ -292,10 +292,10 @@ def reverse_standardized_y_by_sector(y_std, mean_std_list, sector_index):
     """
     Reverses standardization by sector on y-values.
 
-    :param y_std: List of standardized y-values.
-    :param mean_std_list: List of means and standard deviations grouped by sector.
-    :param sector_index: Numerical value that identifies the sector.
-    :return: Returns y-values with standardization reversed.
+    :param y_std: List of standardized y-values
+    :param mean_std_list: List of means and standard deviations grouped by sector
+    :param sector_index: Numerical value that identifies the sector
+    :return: y-values with standardization reversed
     """
     reversed_y = y_std
     for i, j in zip(range(num_of_labels), range(0, num_of_labels * 2, 2)):
@@ -309,7 +309,7 @@ def split_train_test(scaled_dataframe_list):
     """
     Splits list of feature scaled pandas dataframes into train and test dataframes.
 
-    :param scaled_dataframe_list: List of feature scaled pandas dataframes grouped by company.
+    :param scaled_dataframe_list: List of feature scaled pandas dataframes grouped by company
     :return: Pandas dataframe with training data, Pandas dataframe with testing data
     """
     num_of_companies = len(scaled_dataframe_list)
@@ -326,6 +326,12 @@ def split_train_test(scaled_dataframe_list):
 
 
 def group_by_symbol(dataframe):
+    """
+    Returns a list of pandas dataframes grouped by company.
+
+    :param dataframe: Pandas dataframe containing dataset
+    :return: List of pandas dataframes grouped by company
+    """
     grouped_by_symbol = dataframe.groupby(dataframe["Symbol"])
     dataframe_list_by_symbol = []
     for name, data in grouped_by_symbol:
@@ -335,6 +341,12 @@ def group_by_symbol(dataframe):
 
 
 def group_by_sector(dataframe):
+    """
+    Returns a list of pandas dataframes grouped by sector.
+
+    :param dataframe: Pandas dataframe containing dataset
+    :return: List of pandas dataframes grouped by sector
+    """
     grouped_by_sector = dataframe.groupby(dataframe["Sector"])
     dataframe_list_by_sector = []
     for name, data in grouped_by_sector:
@@ -344,6 +356,12 @@ def group_by_sector(dataframe):
 
 
 def convert_to_lstm_input(dataset_single):
+    """
+    Converts pandas dataframe into numpy array to input into LSTM model.
+
+    :param dataset_single: Pandas dataframe containing data of a single company or sector
+    :return: 3-D numpy array of x-values, 2-D numpy array of y-values
+    """
     dataset_single = dataset_single.iloc[:, 3:]
     dataset_single_as_np = dataset_single.to_numpy()
     x = []
@@ -365,6 +383,12 @@ def convert_to_lstm_input(dataset_single):
 
 
 def create_model(shape):
+    """
+    Creates a neural network model.
+
+    :param shape: Shape of input array
+    :return: tf.keras.Model object
+    """
     lstm_model = tf.keras.models.Sequential()
 
     lstm_model.add(tf.keras.layers.InputLayer(input_shape=shape))
@@ -380,6 +404,14 @@ def create_model(shape):
 
 
 def fit_model(model, x_train, y_train):
+    """
+    Trains the neural network model on a single company.
+
+    :param model: tf.keras.Model object
+    :param x_train: Training x-values from a single company
+    :param y_train: Training y-values from a single company
+    :return: tf.keras.callbacks.History object
+    """
     lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model/", save_best_only=True)
 
     model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
@@ -389,6 +421,14 @@ def fit_model(model, x_train, y_train):
 
 
 def fit_model_industry(model, x_train, y_train):
+    """
+    Trains the neural network model on a single sector.
+
+    :param model: tf.keras.Model object
+    :param x_train: Training x-values from a single sector
+    :param y_train: Training y-values from a single sector
+    :return: tf.keras.callbacks.History object
+    """
     lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_industry/", save_best_only=True)
 
     model.compile(loss=loss_function, optimizer=optimizer_function, metrics=tf.keras.metrics.RootMeanSquaredError())
@@ -398,6 +438,12 @@ def fit_model_industry(model, x_train, y_train):
 
 
 def compare_predictions(predictions, y):
+    """
+    Compares predicted and actual y-values, shows root-mean-square errors and plots line graphs of predicted vs actual.
+
+    :param predictions: y-values predicted by trained model
+    :param y: Actual y-values
+    """
     if is_plot_line:
         x_axis = np.arange(len(predictions))
         labels_list = ["Open", "High", "Low", "Close"]
@@ -462,7 +508,6 @@ def main():
             predictions = best_model.predict(x_test)
 
         compare_predictions(predictions, y_test)
-
 
     # By Sector Branch
     else:
