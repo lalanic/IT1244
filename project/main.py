@@ -332,15 +332,11 @@ def fit_model_vary(model, x_train, y_train, company_symbol):
 
 
 def get_relative_rmse(predictions, y):
-    labels_list = ["Open", "High", "Low", "Close"]
-    enumerated_labels = enumerate(labels_list)
     relative_root_mean_squared_error_list = []
-    for i, label in enumerated_labels:
+    for i in range(num_of_labels):
         root_mean_squared_error = skm.mean_squared_error(y[:, i], predictions[:, i], squared=False)
         y_mean = np.mean(y[:, i])
         relative_root_mean_squared_error = root_mean_squared_error/y_mean
-        print(label + " Relative RMSE:" + str(relative_root_mean_squared_error))
-
         relative_root_mean_squared_error_list.append(relative_root_mean_squared_error)
 
     return relative_root_mean_squared_error_list
@@ -470,7 +466,8 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
 def main():
     filename = r"data.parquet"  # Replace with data.parquet path
     dataframe_list_by_symbol = convert_parquet_to_dataframe_list(filename)
-    train_in_sector_by_companies(dataframe_list_by_symbol)
+    # train_in_sector_by_companies(dataframe_list_by_symbol)
+    train_in_sector_by_sector(dataframe_list_by_symbol)
 
 
 if __name__ == '__main__':
