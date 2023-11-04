@@ -456,7 +456,7 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
     relative_rmse_list_of_list = []
     for i in range(num_of_companies_in_sector):
         predictions = best_model_industry.predict(x_test[i * num_of_test_rows_per_company:(i + 1) * num_of_test_rows_per_company])
-        relative_rmse_list = get_relative_rmse(predictions, y_test)
+        relative_rmse_list = get_relative_rmse(predictions, y_test[i * num_of_test_rows_per_company:(i + 1) * num_of_test_rows_per_company])
         relative_rmse_list_of_list.append(relative_rmse_list)
 
     arr = np.array(relative_rmse_list_of_list)
