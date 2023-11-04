@@ -452,6 +452,8 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
     x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
     best_model_industry = tf.keras.models.load_model("best_model_industry/")
 
+    num_of_companies_in_sector = int(len(test_df_list_by_sector[SECTOR_INDEX]) / num_of_test_rows_per_company)
+
 
 def main():
     filename = r"data.parquet"  # Replace with data.parquet path
