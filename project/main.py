@@ -13,7 +13,7 @@ is_train_model = True  # False = Use pretrained model
 
 
 COMPANY_INDEX = 99  # Change company
-SECTOR_INDEX = 4  # Change industry (sector)
+SECTOR_INDEX = 3  # Change industry (sector)
 
 days_backtracked = 1  # Change number of previous days data used
 train_ratio = 0.8
@@ -487,8 +487,8 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
 def main():
     filename = r"data.parquet"  # Replace with data.parquet path
     dataframe_list_by_symbol = convert_parquet_to_dataframe_list(filename)
-    train_in_sector_by_companies(dataframe_list_by_symbol)
-    # train_in_sector_by_sector(dataframe_list_by_symbol)
+    # train_in_sector_by_companies(dataframe_list_by_symbol)
+    train_in_sector_by_sector(dataframe_list_by_symbol)
 
 
 if __name__ == '__main__':
