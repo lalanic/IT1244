@@ -10,8 +10,6 @@ pd.set_option('display.expand_frame_repr', False)
 
 
 is_train_model = False  # False = Use pretrained model
-is_by_symbol = True  # True = Train by company, False = Train by sector
-is_plot_line = True  # True = Print root-mean-square errors for all 4 y-values and plot predicted vs actual line graph
 
 
 COMPANY_INDEX = 99  # Change company
