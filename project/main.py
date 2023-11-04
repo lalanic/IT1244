@@ -10,10 +10,11 @@ pd.set_option('display.expand_frame_repr', False)
 
 
 is_train_model = True  # False = Use pretrained model
+run_option = 4  # 1 = Single Company output; 2 = Single Sector output; 3 = Averaged output, train by company; 4 = Averaged output, train by sector
 
 
 COMPANY_INDEX = 99  # Change company
-SECTOR_INDEX = 3  # Change industry (sector)
+SECTOR_INDEX = 9  # Change industry (sector)
 
 days_backtracked = 1  # Change number of previous days data used
 train_ratio = 0.8
@@ -97,6 +98,12 @@ def process_data(dataframe):
 
 
 def convert_parquet_to_dataframe_list(filename):
+    """
+    Converts parquet file into a list of pandas dataframes grouped by company.
+
+    :param filename: Raw string of file path
+    :return: List of pandas dataframes grouped by company
+    """
     dataframe = load_data(filename)
     cleaned_dataframe = clean_dataframe(dataframe)
     dataframe_list_by_symbol = process_data(cleaned_dataframe)
@@ -332,7 +339,7 @@ def fit_model_vary(model, x_train, y_train, company_symbol, sector):
 
 def fit_model_industry_vary(model, x_train, y_train, sector):
     """
-    Trains the neural network model on a single sector.
+    Trains the neural network model on a single sector and saves according to sector.
 
     :param sector: Sector string
     :param model: tf.keras.Model object
@@ -349,6 +356,13 @@ def fit_model_industry_vary(model, x_train, y_train, sector):
 
 
 def get_relative_rmse(predictions, y):
+    """
+    Returns relative root-mean-square error between predicted and actual y-values.
+
+    :param predictions: Predicted values from model
+    :param y: Actual y-values
+    :return: List of relative root-mean-square errors for Open, High, Low, Close respectively
+    """
     relative_root_mean_squared_error_list = []
     for i in range(num_of_labels):
         root_mean_squared_error = skm.mean_squared_error(y[:, i], predictions[:, i], squared=False)
@@ -360,6 +374,12 @@ def get_relative_rmse(predictions, y):
 
 
 def train_single_company(dataframe_list_by_symbol):
+    """
+    Returns relative root-mean-square error for a single company with model trained on a single company.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
+    :return: List of relative root-mean-square errors for Open, High, Low, Close respectively
+    """
     scaled_dataframe_list = normalize_by_symbol(dataframe_list_by_symbol)
     train_df, test_df = split_train_test(scaled_dataframe_list)
 
@@ -383,6 +403,12 @@ def train_single_company(dataframe_list_by_symbol):
 
 
 def train_single_sector(dataframe_list_by_symbol):
+    """
+    Returns relative root-mean-square error for a single company with model trained on a single sector.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
+    :return: List of relative root-mean-square errors for Open, High, Low, Close respectively
+    """
     scaled_dataframe_list = normalize_by_sector(dataframe_list_by_symbol)
     train_df, test_df = split_train_test(scaled_dataframe_list)
 
@@ -409,6 +435,11 @@ def train_single_sector(dataframe_list_by_symbol):
 
 
 def train_in_sector_by_companies(dataframe_list_by_symbol):
+    """
+    Prints relative root-mean-square error averaged across all companies in the same sector with model trained by company.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
+    """
     scaled_by_company_df_list = normalize_by_symbol(dataframe_list_by_symbol)
     company_train_df, company_test_df = split_train_test(scaled_by_company_df_list)
 
@@ -447,6 +478,11 @@ def train_in_sector_by_companies(dataframe_list_by_symbol):
 
 
 def train_in_sector_by_sector(dataframe_list_by_symbol):
+    """
+    Prints relative root-mean-square error averaged across all companies in the same sector with model trained by sector.
+
+    :param dataframe_list_by_symbol: List of pandas dataframes grouped by company
+    """
     rows_per_company = len(dataframe_list_by_symbol[0])
     num_of_test_rows_per_company = int((1 - train_ratio) * rows_per_company)
 
@@ -487,8 +523,15 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
 def main():
     filename = r"data.parquet"  # Replace with data.parquet path
     dataframe_list_by_symbol = convert_parquet_to_dataframe_list(filename)
-    # train_in_sector_by_companies(dataframe_list_by_symbol)
-    train_in_sector_by_sector(dataframe_list_by_symbol)
+
+    if run_option == 1:
+        train_single_company(dataframe_list_by_symbol)
+    elif run_option == 2:
+        train_single_sector(dataframe_list_by_symbol)
+    elif run_option == 3:
+        train_in_sector_by_companies(dataframe_list_by_symbol)
+    elif run_option == 4:
+        train_in_sector_by_sector(dataframe_list_by_symbol)
 
 
 if __name__ == '__main__':
