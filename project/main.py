@@ -1,7 +1,6 @@
 import pandas as pd
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 import sklearn.metrics as skm
 
 pd.set_option('display.max_columns', None)
@@ -9,12 +8,12 @@ pd.set_option('display.expand_frame_repr', False)
 # pd.set_option('display.max_rows', None)
 
 
-is_train_model = True  # False = Use pretrained model
+is_train_model = False  # False = Use pretrained model
 run_option = 4  # 1 = Single Company output; 2 = Single Sector output; 3 = Averaged output, train by company; 4 = Averaged output, train by sector
 
 
 COMPANY_INDEX = 99  # Change company
-SECTOR_INDEX = 9  # Change industry (sector)
+SECTOR_INDEX = 10  # Change industry (sector)
 
 days_backtracked = 1  # Change number of previous days data used
 train_ratio = 0.8
@@ -85,10 +84,6 @@ def process_data(dataframe):
             dataframe_list_by_symbol[i]["D-" + str(j) + " High"] = dataframe_list_by_symbol[i]["High"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Low"] = dataframe_list_by_symbol[i]["Low"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Close"] = dataframe_list_by_symbol[i]["Close"].shift(periods=j, axis=0)
-            # dataframe_list_by_symbol[i]["D-" + str(j) + " Adj Close"] = dataframe_list_by_symbol[i]["Adj Close"].shift(periods=j, axis=0)
-            # dataframe_list_by_symbol[i]["D-" + str(j) + " Vol"] = dataframe_list_by_symbol[i]["Volume"].shift(periods=j, axis=0)
-            # dataframe_list_by_symbol[i]["D-" + str(j) + " News Vol Proportion"] = (dataframe_list_by_symbol[i]["News - Volume"] / dataframe_list_by_symbol[i]["News - All News Volume"]).shift(periods=j, axis=0)
-            # dataframe_list_by_symbol[i]["D-" + str(j) + " Net News Sentiment"] = (dataframe_list_by_symbol[i]["News - Positive Sentiment"] - dataframe_list_by_symbol[i]["News - Negative Sentiment"]).shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Pos News Sentiment"] = dataframe_list_by_symbol[i]["News - Positive Sentiment"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Layoffs"] = dataframe_list_by_symbol[i]["News - Layoffs"].shift(periods=j, axis=0)
             dataframe_list_by_symbol[i]["D-" + str(j) + " Adverse"] = dataframe_list_by_symbol[i]["News - Adverse Events"].shift(periods=j, axis=0)
@@ -274,7 +269,6 @@ def create_model(shape):
 
     lstm_model.add(tf.keras.layers.LSTM(units=LSTM_units, return_sequences=True))
     lstm_model.add(tf.keras.layers.LSTM(units=LSTM_units))
-    # lstm_model.add(tf.keras.layers.Dense(units=LSTM_units, kernel_initializer="lecun_normal", activation="selu"))
     lstm_model.add(tf.keras.layers.Dense(units=LSTM_units, activation="relu"))
     lstm_model.add(tf.keras.layers.Dense(units=LSTM_units))
     lstm_model.add(tf.keras.layers.Dense(units=LSTM_units))
