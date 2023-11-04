@@ -9,7 +9,7 @@ pd.set_option('display.expand_frame_repr', False)
 # pd.set_option('display.max_rows', None)
 
 
-is_train_model = False  # False = Use pretrained model
+is_train_model = True  # False = Use pretrained model
 
 
 COMPANY_INDEX = 99  # Change company
