@@ -311,17 +311,18 @@ def fit_model_industry(model, x_train, y_train):
     return history
 
 
-def fit_model_vary(model, x_train, y_train, company_symbol):
+def fit_model_vary(model, x_train, y_train, company_symbol, sector):
     """
     Trains the neural network model and saves according to company_symbol.
 
+    :param sector: Company sector string
     :param company_symbol: Company symbol string
     :param model: tf.keras.Model object
     :param x_train: Training x-values from a single sector
     :param y_train: Training y-values from a single sector
     :return: tf.keras.callbacks.History object
     """
-    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_" + company_symbol + "/", save_best_only=True)
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint(sector + "/" + "best_model" + "_" + company_symbol + "/", save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics=tf.keras.metrics.RootMeanSquaredError())
     history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
@@ -333,6 +334,7 @@ def fit_model_industry_vary(model, x_train, y_train, sector):
     """
     Trains the neural network model on a single sector.
 
+    :param sector: Sector string
     :param model: tf.keras.Model object
     :param x_train: Training x-values from a single sector
     :param y_train: Training y-values from a single sector
@@ -419,6 +421,7 @@ def train_in_sector_by_companies(dataframe_list_by_symbol):
     relative_rmse_list_of_list = []
     for i in range(len(train_df_list_by_company)):
         company_symbol = str(train_df_list_by_company[i].iloc[0, 1])
+        sector = str(train_df_list_by_company[i].iloc[0, 0])
         print(train_df_list_by_company[i])
 
         x_train, y_train = convert_to_lstm_input(train_df_list_by_company[i])
@@ -426,10 +429,10 @@ def train_in_sector_by_companies(dataframe_list_by_symbol):
         lstm_model = create_model(input_shape)
 
         if is_train_model:
-            fit_model_vary(lstm_model, x_train, y_train, company_symbol)
+            fit_model_vary(lstm_model, x_train, y_train, company_symbol, sector)
 
         x_test, y_test = convert_to_lstm_input(test_df_list_by_company[i])
-        best_model = tf.keras.models.load_model("best_model" + "_" + company_symbol + "/")
+        best_model = tf.keras.models.load_model(sector + "/" + "best_model" + "_" + company_symbol + "/")
 
         predictions = best_model.predict(x_test)
         relative_rmse_list = get_relative_rmse(predictions, y_test)
@@ -484,8 +487,8 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
 def main():
     filename = r"data.parquet"  # Replace with data.parquet path
     dataframe_list_by_symbol = convert_parquet_to_dataframe_list(filename)
-    # train_in_sector_by_companies(dataframe_list_by_symbol)
-    train_in_sector_by_sector(dataframe_list_by_symbol)
+    train_in_sector_by_companies(dataframe_list_by_symbol)
+    # train_in_sector_by_sector(dataframe_list_by_symbol)
 
 
 if __name__ == '__main__':
