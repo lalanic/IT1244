@@ -19,7 +19,7 @@ Or upgrade using:
 
 2) Place the *data.parquet* file in the same directory as the `main_lstm` jupyter file.
 
-3) **If using pretrained model(s)**, place the *saved_models/* folder in the same directory as the `main_lstm` jupyter file.
+3) **If using pretrained model(s)**, place the *saved_models/* folder in the same directory as the `main_lstm` jupyter file. Some pretrained models are provided. More information can be found in [Code Parameters](#Code-Parameters).
 
 4) Set the parameters to obtain the desired results within the `main_lstm` jupyter file as shown in [Code Parameters](#Code-Parameters).
 
@@ -45,6 +45,7 @@ Or upgrade using:
 	- Affects `run_option` `1`.
 - `SECTOR_INDEX` selects the sector to be used, ranges from 0 to 10.
 	- Affects `run_option` `2`,`3` and `4`.
+ 	- Pretrained models for `run_option` `3` and `4` for sectors `0`, `1`, `2`, `3`, `4`, `9` and `10` are provided.  
 
 ## How to get started for secondary models (Linear Regression, PCR)
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
