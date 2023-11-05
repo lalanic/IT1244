@@ -8,8 +8,8 @@ pd.set_option('display.expand_frame_repr', False)
 # pd.set_option('display.max_rows', None)
 
 
-is_train_model = False  # False = Use pretrained model
-run_option = 4  # 1 = Single Company output; 2 = Single Sector output; 3 = Averaged output, train by company; 4 = Averaged output, train by sector
+is_train_model = True  # False = Use pretrained model
+run_option = 1  # 1 = Single Company output; 2 = Single Sector output; 3 = Averaged output, train by company; 4 = Averaged output, train by sector
 
 
 COMPANY_INDEX = 99  # Change company
@@ -287,7 +287,7 @@ def fit_model(model, x_train, y_train):
     :param y_train: Training y-values from a single company
     :return: tf.keras.callbacks.History object
     """
-    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model/", save_best_only=True)
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint("saved_models/best_model/", save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics=tf.keras.metrics.RootMeanSquaredError())
     history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp], batch_size=15)
@@ -304,7 +304,7 @@ def fit_model_industry(model, x_train, y_train):
     :param y_train: Training y-values from a single sector
     :return: tf.keras.callbacks.History object
     """
-    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_industry/", save_best_only=True)
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint("saved_models/best_model_industry/", save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics=tf.keras.metrics.RootMeanSquaredError())
     history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
@@ -323,7 +323,7 @@ def fit_model_vary(model, x_train, y_train, company_symbol, sector):
     :param y_train: Training y-values from a single sector
     :return: tf.keras.callbacks.History object
     """
-    lstm_cp = tf.keras.callbacks.ModelCheckpoint(sector + "/" + "best_model" + "_" + company_symbol + "/", save_best_only=True)
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint("saved_models/" + sector + "/" + "best_model" + "_" + company_symbol + "/", save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics=tf.keras.metrics.RootMeanSquaredError())
     history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
@@ -341,7 +341,7 @@ def fit_model_industry_vary(model, x_train, y_train, sector):
     :param y_train: Training y-values from a single sector
     :return: tf.keras.callbacks.History object
     """
-    lstm_cp = tf.keras.callbacks.ModelCheckpoint("best_model_industry_" + sector + "/", save_best_only=True)
+    lstm_cp = tf.keras.callbacks.ModelCheckpoint("saved_models/best_model_industry_" + sector + "/", save_best_only=True)
 
     model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics=tf.keras.metrics.RootMeanSquaredError())
     history = model.fit(x_train, y_train, validation_split=val_ratio, epochs=num_of_epochs, callbacks=[lstm_cp])
@@ -389,7 +389,7 @@ def train_single_company(dataframe_list_by_symbol):
         fit_model(lstm_model, x_train, y_train)
 
     x_test, y_test = convert_to_lstm_input(test_df_list_by_symbol[COMPANY_INDEX])
-    best_model = tf.keras.models.load_model("best_model/")
+    best_model = tf.keras.models.load_model("saved_models/best_model/")
 
     predictions = best_model.predict(x_test)
     relative_rmse_list = get_relative_rmse(predictions, y_test)
@@ -421,7 +421,7 @@ def train_single_sector(dataframe_list_by_symbol):
         fit_model_industry(lstm_model, x_train, y_train)
 
     x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
-    best_model = tf.keras.models.load_model("best_model_industry/")
+    best_model = tf.keras.models.load_model("saved_models/best_model_industry/")
 
     predictions = best_model.predict(x_test[:num_of_test_rows_per_company])
     relative_rmse_list = get_relative_rmse(predictions, y_test[:num_of_test_rows_per_company])
@@ -457,7 +457,7 @@ def train_in_sector_by_companies(dataframe_list_by_symbol):
             fit_model_vary(lstm_model, x_train, y_train, company_symbol, sector)
 
         x_test, y_test = convert_to_lstm_input(test_df_list_by_company[i])
-        best_model = tf.keras.models.load_model(sector + "/" + "best_model" + "_" + company_symbol + "/")
+        best_model = tf.keras.models.load_model("saved_models/" + sector + "/" + "best_model" + "_" + company_symbol + "/")
 
         predictions = best_model.predict(x_test)
         relative_rmse_list = get_relative_rmse(predictions, y_test)
@@ -497,7 +497,7 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
         fit_model_industry_vary(lstm_model, x_train, y_train, sector)
 
     x_test, y_test = convert_to_lstm_input(test_df_list_by_sector[SECTOR_INDEX])
-    best_model_industry = tf.keras.models.load_model("best_model_industry_" + sector + "/")
+    best_model_industry = tf.keras.models.load_model("saved_models/best_model_industry_" + sector + "/")
 
     num_of_companies_in_sector = int(len(test_df_list_by_sector[SECTOR_INDEX]) / num_of_test_rows_per_company)
     relative_rmse_list_of_list = []
@@ -519,9 +519,9 @@ def main():
     dataframe_list_by_symbol = convert_parquet_to_dataframe_list(filename)
 
     if run_option == 1:
-        train_single_company(dataframe_list_by_symbol)
+        print(train_single_company(dataframe_list_by_symbol))
     elif run_option == 2:
-        train_single_sector(dataframe_list_by_symbol)
+        print(train_single_sector(dataframe_list_by_symbol))
     elif run_option == 3:
         train_in_sector_by_companies(dataframe_list_by_symbol)
     elif run_option == 4:
