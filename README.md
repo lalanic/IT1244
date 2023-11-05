@@ -1,7 +1,7 @@
 
-# IT1244 Project LSTM Model README
+# IT1244 Project README
 
-## How to get started
+## How to get started (LSTM)
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
 
 2) Place the *data.parquet* file in the same directory as the main jupyter file.
