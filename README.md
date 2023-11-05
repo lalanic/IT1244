@@ -1,5 +1,18 @@
-
 # IT1244 Project README
+
+## Packages
+Additional Packages Required:  
+pyarrow 14.0.0  
+fastparquet 2023.10.1  
+pandas 2.1.2  
+scikit-learn 1.3.2  
+tensorflow 2.14.0  
+numpy 1.26.1  
+  
+You can install the packages using:
+`pip install <package_name>`  
+Or upgrade using:
+`pip install <package_name> --upgrade`
 
 ## How to get started (LSTM)
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
@@ -33,16 +46,9 @@
 - `SECTOR_INDEX` selects the sector to be used, ranges from 0 to 10.
 	- Affects `run_option` `2`,`3` and `4`.
 
-### Packages
-Additional Packages Required:  
-pyarrow 14.0.0  
-fastparquet 2023.10.1  
-pandas 2.1.2  
-scikit-learn 1.3.2  
-tensorflow 2.14.0  
-numpy 1.26.1  
-  
-You can install the packages using:
-`pip install <package_name>`  
-Or upgrade using:
-`pip install <package_name> --upgrade`
+## How to get started for secondary models/feature visualisation (Linear Regression, PCR, ECA)
+1) Ensure the [required packages](#Packages) are installed and of the correct version.  
+
+2) Place the *data.parquet* file in the same directory as the main jupyter file.
+
+5) Run the program.
