@@ -8,7 +8,9 @@
 
 3) **If using pretrained model(s)**, place the *saved_models/* folder in the same directory as the main jupyter file.
 
-4) Set the parameters within the main jupyter file as shown in [Code Parameters](#Code-Parameters).
+4) Set the parameters to obtain the desired results within the main jupyter file as shown in [Code Parameters](#Code-Parameters).
+
+5) Run the program.
 
 ### Code Parameters
 #### The following parameters are located at the top of the main jupyter file.
