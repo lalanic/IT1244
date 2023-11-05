@@ -1,5 +1,5 @@
 
-# IT1244 Project
+# IT1244 LSTM Model README
 
 ## How to get started
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
