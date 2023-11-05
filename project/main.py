@@ -464,7 +464,6 @@ def train_in_sector_by_companies(dataframe_list_by_symbol):
         relative_rmse_list_of_list.append(relative_rmse_list)
 
     arr = np.array(relative_rmse_list_of_list)
-    print(arr)
     labels_list = ["Open Avg RRMSE", "High Avg RRMSE", "Low Avg RRMSE", "Close Avg RRMSE"]
     enumerated_labels = enumerate(labels_list)
     for i, label in enumerated_labels:
@@ -507,7 +506,6 @@ def train_in_sector_by_sector(dataframe_list_by_symbol):
         relative_rmse_list_of_list.append(relative_rmse_list)
 
     arr = np.array(relative_rmse_list_of_list)
-    print(arr)
     labels_list = ["Open Avg RRMSE", "High Avg RRMSE", "Low Avg RRMSE", "Close Avg RRMSE"]
     enumerated_labels = enumerate(labels_list)
     for i, label in enumerated_labels:
