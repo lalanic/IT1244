@@ -28,7 +28,7 @@ Or upgrade using:
 	- `4` will print an **average** relative root-mean-square error for open, high, low, close for **all companies in a specified sector** based on a **sector-specific** model.
 
 ### Packages
-Additional Packages Required:
+Additional Packages Required:  
 pyarrow 14.0.0  
 fastparquet 2023.10.1  
 pandas 2.1.2  
