@@ -17,11 +17,11 @@ Or upgrade using:
 ## How to get started (LSTM)
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
 
-2) Place the *data.parquet* file in the same directory as the `main_lstm` jupyter file.
+2) Place the *data.parquet* file in the same directory as the *main_lstm.ipynp* jupyter file.
 
-3) **If using pretrained model(s)**, place the *saved_models/* folder in the same directory as the `main_lstm` jupyter file. Some pretrained models are provided. More information can be found in [Code Parameters](#Code-Parameters).
+3) **If using pretrained model(s)**, place the *saved_models/* folder in the same directory as the *main_lstm.ipynp* jupyter file. Some pretrained models are provided. More information can be found in [Code Parameters](#Code-Parameters).
 
-4) Set the parameters to obtain the desired results within the `main_lstm` jupyter file as shown in [Code Parameters](#Code-Parameters).
+4) Set the parameters to obtain the desired results within the *main_lstm.ipynp* jupyter file as shown in [Code Parameters](#Code-Parameters).
 
 5) Run the program.
 
@@ -50,13 +50,13 @@ Or upgrade using:
 ## How to get started for secondary models (Linear Regression, PCR)
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
 
-2) Place the *data.parquet* file in the same directory as the *Other_Models* jupyter file.
+2) Place the *data.parquet* file in the same directory as the *Other_Models.ipynp* jupyter file.
 
 5) Run the program.
 
 ## How to get started for feature visualisation (EDA)
 1) Ensure the [required packages](#Packages) are installed and of the correct version.  
 
-2) Place the *data.parquet* file in the same directory as the *EDA* jupyter file.
+2) Place the *data.parquet* file in the same directory as the *EDA.ipynp* jupyter file.
 
 5) Run the program.
