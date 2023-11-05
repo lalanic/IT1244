@@ -39,6 +39,7 @@ pandas 2.1.2
 scikit-learn 1.3.2  
 tensorflow 2.14.0  
 numpy 1.26.1  
+  
 You can install the packages using:
 `pip install <package_name>`  
 Or upgrade using:
